@@ -1,0 +1,93 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+UPVER := $(shell dpkg-parsechangelog | grep ^Version | cut -d' ' -f2 | cut -d- -f1 | cut -d+ -f1)
+TARNAME := mapnik_$(UPVER)+ds1.orig.tar
+
+# scons flags
+SCONS_FLAGS := INPUT_PLUGINS=gdal,geos,kismet,ogr,osm,postgis,raster,rasterlite,shape,sqlite
+SCONS_FLAGS += PROJ_INCLUDES=/usr/include PROJ_LIBS=/usr/lib
+SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts/truetype/ttf-dejavu
+SCONS_FLAGS += XMLPARSER=libxml2
+SCONS_FLAGS += PREFIX=/usr LIB_DIR_NAME=/mapnik/2.0
+
+override_dh_auto_configure:
+	scons $(SCONS_FLAGS) \
+		CCFLAGS="$(CFLAGS)" \
+		configure
+
+override_dh_auto_build:
+	set -e; \
+	for ver in $(shell pyversions -r -v); do \
+		scons $(SCONS_FLAGS) \
+			BOOST_PYTHON_LIB=boost_python-py$$(echo $$ver | sed 's@\.@@') \
+			PYTHON=/usr/bin/python$$ver ; \
+	done
+
+override_dh_prep:
+	dh_prep -Xdebian/tmp
+
+override_dh_auto_install:
+	for ver in $(shell pyversions -r -v); do \
+		scons $(SCONS_FLAGS) \
+			CCFLAGS="$(CFLAGS)" \
+			BOOST_PYTHON_LIB=boost_python-py$$(echo $$ver | sed 's@\.@@') \
+			PYTHON=/usr/bin/python$$ver \
+			DESTDIR=$(CURDIR)/debian/tmp \
+			install ; \
+	done
+
+override_dh_install:
+	dh_install
+	find $(CURDIR)/debian/ -name "modserver.py" | xargs chmod -x
+
+	mv $(CURDIR)/debian/mapnik-utils/usr/bin/upgrade_map_xml.py \
+		$(CURDIR)/debian/mapnik-utils/usr/bin/upgrade-map-xml
+
+	# build Python API documentation
+	# and trick epydoc into loading the shlib too
+	-ln -s ../_mapnik2.so bindings/python/mapnik/
+	-( cd docs/epydoc_config ; \
+	LD_LIBRARY_PATH=$(CURDIR)/debian/libmapnik2-2.0/usr/lib/ ./build_epydoc.sh )
+	rm -rf bindings/python/mapnik/_mapnik2.so
+	dh_install -pmapnik-doc docs/api_docs/python /usr/share/doc/mapnik-doc/
+
+override_dh_auto_clean:
+	scons --clean $(SCONS_FLAGS)
+	find -name '*.pyc' -exec rm -f {} \;
+	find -name '.sconsign*' -exec rm -f {} \;
+	find -name '*.o' -exec rm -f {} \;
+	rm -rf .sconf_temp config.log bindings/python/mapnik/paths.py \
+		utils/shapeindex/shapeindex config.py config.cache \
+		docs/api_docs/python/*
+
+	dh_auto_clean
+
+override_dh_installexamples:
+	dh_installexamples -Xdata/new
+	find $(CURDIR)/debian/ -name "*.png" | xargs -r chmod -x
+
+%:
+	dh $@ \
+		--with python2
+
+get-orig-source:
+	uscan \
+		--verbose \
+		--force-download \
+		--download-version $(UPVER) \
+		--rename \
+		--destdir .
+
+	tar xvf mapnik_$(UPVER).orig.tar.gz
+	@rm -vrf mapnik_$(UPVER).orig.tar.gz
+	@echo Removing third-party sources from orig.tar.gz
+	@rm -rf mapnik-$(UPVER)/fonts/dejavu*
+	@rm -rf mapnik-$(UPVER)/scons/
+	@rm -rf mapnik-$(UPVER)/tinyxml/
+	tar cf $(TARNAME) mapnik-$(UPVER)/
+	gzip -9 $(TARNAME)
+	rm -rf mapnik-$(UPVER)/
