@@ -1664,7 +1664,7 @@ if not preconfigured:
         if not env['SUNCC']:
 
             # Common flags for CXX compiler.
-            common_cxx_flags = '-ansi -Wall %s %s -ftemplate-depth-300 ' % (env['WARNING_CXXFLAGS'], pthread)
+            common_cxx_flags = '-ansi -Wall %s %s ' % (env['WARNING_CXXFLAGS'], pthread)
 
             # https://github.com/mapnik/mapnik/issues/1835
             if sys.platform == 'darwin' and env['CXX'] == 'g++':
