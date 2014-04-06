@@ -1,0 +1,3 @@
+version=3
+opts=filenamemangle=s/.*\/v?([\d\.-]+)\.tar\.gz/mapnik-$1.tar.gz/,dversionmangle=s/\+ds[\d]*$// \
+https://github.com/mapnik/mapnik/tags .*/archive/v?([\d\.]+).tar.gz
