@@ -400,10 +400,12 @@ bool box2d<T>::from_string(std::string const& s)
         // needing to link to libmapnik
         std::string::const_iterator str_beg = item.begin();
         std::string::const_iterator str_end = item.end();
+        boost::spirit::qi::double_type double_;
+        boost::spirit::ascii::space_type space;
         bool r = boost::spirit::qi::phrase_parse(str_beg,
                                                  str_end,
-                                                 boost::spirit::qi::double_,
-                                                 boost::spirit::ascii::space,
+                                                 double_,
+                                                 space,
                                                  d[i]);
         if (!(r && (str_beg == str_end)))
         {
