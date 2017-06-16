@@ -1,0 +1,5 @@
+#!/bin/sh
+
+PYTHON=${PYTHON:-python}
+
+$PYTHON scons/scons.py --implicit-deps-changed configure "$@"
