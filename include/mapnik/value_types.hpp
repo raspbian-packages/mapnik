@@ -23,6 +23,7 @@
 #ifndef MAPNIK_VALUE_TYPES_HPP
 #define MAPNIK_VALUE_TYPES_HPP
 
+#include <unicode/unistr.h>
 // mapnik
 #include <mapnik/config.hpp>
 #include <mapnik/cxx11_support.hpp>

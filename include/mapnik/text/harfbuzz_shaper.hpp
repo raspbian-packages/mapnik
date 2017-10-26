@@ -55,11 +55,7 @@ static inline hb_script_t _icu_script_to_script(UScriptCode script)
 static inline const uint16_t * uchar_to_utf16(const UChar* src)
 {
    static_assert(sizeof(UChar) == sizeof(uint16_t),"UChar is eq size to uint16_t");
-#if defined(_MSC_VER)
    return reinterpret_cast<const uint16_t *>(src);
-#else
-   return src;
-#endif
 }
 
 struct harfbuzz_shaper
