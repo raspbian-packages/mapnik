@@ -1393,6 +1393,8 @@ if not preconfigured:
         ['harfbuzz', 'harfbuzz/hb.h',True,'C++']
     ]
 
+    CHECK_PKG_CONFIG = conf.CheckPKGConfig('0.15.0')
+
     if env.get('FREETYPE_LIBS') or env.get('FREETYPE_INCLUDES'):
         REQUIRED_LIBSHEADERS.insert(0,['freetype','ft2build.h',True,'C'])
         if env.get('FREETYPE_INCLUDES'):
@@ -1413,6 +1415,15 @@ if not preconfigured:
                     env['EXTRA_FREETYPE_LIBS'].append('bz2')
             except OSError as e:
                 pass
+    elif env['RUNTIME_LINK'] == 'static':
+        temp_env = env.Clone()
+        temp_env['LIBS'] = []
+        try:
+            temp_env.ParseConfig('pkg-config freetype2 --libs')
+            if 'bz2' in temp_env['LIBS']:
+                env['EXTRA_FREETYPE_LIBS'].append('bz2')
+        except OSError as e:
+            pass
 
     # libxml2 should be optional but is currently not
     # https://github.com/mapnik/mapnik/issues/913
@@ -1634,8 +1645,6 @@ if not preconfigured:
             color_print(1,'%s not detected on your system' % env['QUERIED_ICU_DATA'] )
             env['MISSING_DEPS'].append('ICU_DATA')
 
-
-    CHECK_PKG_CONFIG = conf.CheckPKGConfig('0.15.0')
 
     if len(env['REQUESTED_PLUGINS']):
         if env['HOST']:
