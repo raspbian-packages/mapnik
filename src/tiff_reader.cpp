@@ -39,6 +39,7 @@ extern "C"
 #endif
 
 // stl
+#include <algorithm>
 #include <memory>
 #include <fstream>
 

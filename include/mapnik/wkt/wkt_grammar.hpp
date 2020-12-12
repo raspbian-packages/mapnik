@@ -29,6 +29,7 @@
 #pragma GCC diagnostic push
 #include <mapnik/warning_ignore.hpp>
 #include <boost/assert.hpp>
+#include <boost/phoenix/core/reference.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_function.hpp>
 #pragma GCC diagnostic pop
