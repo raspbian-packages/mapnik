@@ -1,0 +1,17 @@
+Description: `boost/algorithm/string/trim.hpp` is needed for `trim_if'.
+Author: Artem Pavlenko <artem@mapnik.org>
+Origin: https://github.com/mapnik/mapnik/commit/50f1b05f863ab7060558d91a7d9521d849f29df3
+Forwarded: not-needed
+
+--- a/plugins/input/csv/csv_utils.cpp
++++ b/plugins/input/csv/csv_utils.cpp
+@@ -40,6 +40,9 @@
+ #include <cstdio>
+ #include <algorithm>
+ 
++// boost string algo
++#include <boost/algorithm/string/trim.hpp>
++
+ namespace csv_utils {
+ namespace detail {
+ 

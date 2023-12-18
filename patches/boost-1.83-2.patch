@@ -1,0 +1,15 @@
+Description: Add support for building with Boost 1.83
+From: arojas <arojas@example.com>
+Origin: https://github.com/mapnik/mapnik/commit/3300b67b0ce048725cc4fcd99d19e12fbf5fe397
+Bug: https://github.com/mapnik/mapnik/pull/4413
+
+--- a/include/mapnik/json/generic_json.hpp
++++ b/include/mapnik/json/generic_json.hpp
+@@ -32,6 +32,7 @@
+ #include <boost/spirit/include/qi.hpp>
+ #include <boost/spirit/include/phoenix.hpp>
+ #include <boost/fusion/include/std_pair.hpp>
++#include <boost/regex/pending/unicode_iterator.hpp>
+ #pragma GCC diagnostic pop
+ 
+ #include <vector>
