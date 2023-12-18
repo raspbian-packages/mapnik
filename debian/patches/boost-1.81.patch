@@ -1,0 +1,15 @@
+Description: Fix FTBFS with Boost 1.81.
+Author: Tom Hughes <tom@compton.nu>
+Origin: https://src.fedoraproject.org/rpms/mapnik/c/7076c88d5b6437a12966c5f34299f4940d8d3a18
+Bug: https://github.com/boostorg/phoenix/issues/115
+
+--- a/SConstruct
++++ b/SConstruct
+@@ -1953,6 +1953,7 @@ if not preconfigured:
+         # http://www.boost.org/doc/libs/1_47_0/libs/spirit/doc/html/spirit/what_s_new/spirit_2_5.html#spirit.what_s_new.spirit_2_5.breaking_changes
+         env.Append(CPPDEFINES = '-DBOOST_SPIRIT_NO_PREDEFINED_TERMINALS=1')
+         env.Append(CPPDEFINES = '-DBOOST_PHOENIX_NO_PREDEFINED_TERMINALS=1')
++        env.Append(CPPDEFINES = '-DBOOST_PHOENIX_STL_TUPLE_H_')
+         # c++11 support / https://github.com/mapnik/mapnik/issues/1683
+         #  - upgrade to PHOENIX_V3 since that is needed for c++11 compile
+         env.Append(CPPDEFINES = '-DBOOST_SPIRIT_USE_PHOENIX_V3=1')

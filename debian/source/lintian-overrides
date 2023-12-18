@@ -1,0 +1,3 @@
+# False positive
+uses-python-distutils [scons/scons-local-*/SCons/Defaults.py*]
+
