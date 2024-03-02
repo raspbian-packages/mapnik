@@ -1,0 +1,41 @@
+Description: Fix FTBFS with GCC 13.
+Author: Bas Couwenberg <sebastic@debian.org>
+Bug: https://github.com/mapnik/mapnik/pull/4389
+Bug-Debian: https://bugs.debian.org/1037768
+
+--- a/include/mapnik/wkb.hpp
++++ b/include/mapnik/wkb.hpp
+@@ -28,6 +28,9 @@
+ #include <mapnik/geometry.hpp>
+ #include <mapnik/util/noncopyable.hpp>
+ 
++// stl
++#include <cstdint>
++
+ namespace mapnik
+ {
+ 
+--- a/include/mapnik/geometry_fusion_adapted.hpp
++++ b/include/mapnik/geometry_fusion_adapted.hpp
+@@ -27,6 +27,9 @@
+ #include <mapnik/geometry.hpp>
+ #include <boost/fusion/include/adapt_struct.hpp>
+ 
++// stl
++#include <cstdint>
++
+ BOOST_FUSION_ADAPT_STRUCT(
+     mapnik::geometry::point<double>,
+     (double, x)
+--- a/include/mapnik/geometry/boost_spirit_karma_adapter.hpp
++++ b/include/mapnik/geometry/boost_spirit_karma_adapter.hpp
+@@ -26,6 +26,9 @@
+ 
+ #include <mapnik/geometry.hpp>
+ 
++// stl
++#include <cstdint>
++
+ namespace boost { using mapbox::util::get; }
+ 
+ #include <boost/spirit/home/karma/domain.hpp>
