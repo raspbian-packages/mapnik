@@ -26,6 +26,9 @@
 
 #include <mapnik/geometry.hpp>
 
+// stl
+#include <cstdint>
+
 namespace boost { using mapbox::util::get; }
 
 #include <boost/spirit/home/karma/domain.hpp>
