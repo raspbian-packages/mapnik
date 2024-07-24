@@ -1,0 +1,25 @@
+Description: Fix gcc 14 build issues
+Author: Tom Hughes <tom@compton.nu>
+Origin: https://src.fedoraproject.org/rpms/mapnik/blob/rawhide/f/mapnik-gcc14.patch
+Bug: https://github.com/mapnik/mapnik/issues/4467
+
+--- a/include/mapnik/util/singleton.hpp
++++ b/include/mapnik/util/singleton.hpp
+@@ -39,7 +39,7 @@
+ namespace mapnik {
+ 
+ template<typename T>
+-class CreateUsingNew
++class MAPNIK_DECL CreateUsingNew
+ {
+   public:
+     static T* create() { return new T; }
+@@ -47,7 +47,7 @@ class CreateUsingNew
+ };
+ 
+ template<typename T>
+-class CreateStatic
++class MAPNIK_DECL CreateStatic
+ {
+   private:
+     using storage_type = typename std::aligned_storage<sizeof(T), alignof(T)>::type;
