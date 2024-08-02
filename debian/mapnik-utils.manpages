@@ -1,0 +1,6 @@
+debian/manpages/geometry_to_wkb.1
+debian/manpages/mapnik-index.1
+debian/manpages/mapnik-render.1
+debian/manpages/pgsql2sqlite.1
+debian/manpages/shapeindex.1
+debian/manpages/svg2png.1
