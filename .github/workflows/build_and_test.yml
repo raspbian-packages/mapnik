@@ -1,0 +1,136 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches-ignore:
+      - "no-ci-*"
+
+env:
+  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+  VCPKG_RELEASE: 2024.06.15
+
+jobs:
+  checkSource:
+    name: Check Source Code
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - uses: pre-commit/action@v3.0.1
+
+  buildAndTest:
+    name: >-
+      Build & Test
+      (${{ matrix.os }})
+      (C++ ${{ matrix.cxx-standard }})
+      ${{ startsWith(matrix.os, 'macos-') && (matrix.os == 'macos-14' && '(ARM64)' || '(AMD64)') || '' }}
+    needs: checkSource
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14
+          - ubuntu-22.04
+          - windows-2022
+        cxx-standard:
+          - 17
+
+    steps:
+      - name: Checkout Mapnik
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          path: vcpkg
+          ref: ${{ env.VCPKG_RELEASE }}
+          repository: microsoft/vcpkg
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Install required system packages
+        shell: bash
+        run: |
+          if [ "${RUNNER_OS}" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get -y install \
+              autoconf \
+              autoconf-archive \
+              automake \
+              gperf \
+              lcov \
+              libxxf86vm-dev \
+              ninja-build \
+              postgresql-client
+          elif [ "${RUNNER_OS}" == "macOS" ]; then
+            brew install \
+              autoconf \
+              autoconf-archive \
+              automake \
+              lcov \
+              libtool \
+              ninja \
+              vcpkg
+          elif [ "${RUNNER_OS}" == "Windows" ]; then
+            choco install \
+              ninja \
+              OpenCppCoverage
+            echo "C:\Program Files\OpenCppCoverage" >> ${GITHUB_PATH}
+          fi
+
+      - name: Enable Developer Command Prompt (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+
+      - name: Set CMAKE_BUILD_PARALLEL_LEVEL, CTEST_PARALLEL_LEVEL & PRESET
+        shell: bash
+        run: |
+          PRESET=$(echo "${RUNNER_OS}" | perl -ne "print lc")-ci
+          if [ "${RUNNER_OS}" == "Linux" ]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)" >> ${GITHUB_ENV}
+            echo "CTEST_PARALLEL_LEVEL=$(nproc)" >> ${GITHUB_ENV}
+          elif [ "${RUNNER_OS}" == "macOS" ]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)" >> ${GITHUB_ENV}
+            echo "CTEST_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)" >> ${GITHUB_ENV}
+            PRESET=${PRESET}-${{ matrix.os == 'macos-14' && 'arm64' || 'x64' }}
+          elif [ "${RUNNER_OS}" == "Windows" ]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(pwsh -Command '(Get-CimInstance -ClassName Win32_ComputerSystem).NumberOfLogicalProcessors')" >> ${GITHUB_ENV}
+            echo "CTEST_PARALLEL_LEVEL=$(pwsh -Command '(Get-CimInstance -ClassName Win32_ComputerSystem).NumberOfLogicalProcessors')" >> ${GITHUB_ENV}
+          fi
+          echo "PRESET=${PRESET}" >> ${GITHUB_ENV}
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_CXX_STANDARD:STRING=${{ matrix.cxx-standard }}  \
+            -DUSE_MEMORY_MAPPED_FILE:BOOL=ON \
+            -LA \
+            --preset ${PRESET}
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake \
+            --build \
+            --preset ${PRESET}
+
+      - name: Run Tests
+        uses: ./.github/actions/run_tests
+        with:
+          cmake-preset: ${{ env.PRESET }}
