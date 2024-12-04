@@ -1,0 +1,53 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH SVG2PNG 1 "January 11, 2007"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+svg2png \- Convert SVG image to PNG
+.SH SYNOPSIS
+.B svg2png
+.RI [ options ]
+.RI <svg-file(s)>
+.SH DESCRIPTION
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
+.\" respectively.
+\fBsvg2png\fP is a program that converts SVG images to PNG.
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-V, \-\-version
+Print version string
+.TP
+.B \-v, \-\-verbose
+Enable verbose output
+.TP
+.B \-o, \-\-open
+Automatically open the file after rendering (OS X only)
+.TP
+.B \-s, \-\-strict
+Enables strict SVG parsing
+.TP
+.B \-\-scale\-factor
+Provide scaling factor (default: 1.0)
+.TP
+.B \-\-opacity
+Top level opacity (default: 1.0)
+.TP
+.B \-\-svg
+SVG file to read
