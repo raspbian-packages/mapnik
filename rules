@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Enable hardening build flags
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+
+include /usr/share/dpkg/architecture.mk
+
+MAPNIK_MAJOR_VERSION = $(shell awk '/^#define MAPNIK_MAJOR_VERSION/ {print $$3}' include/mapnik/version.hpp)
+MAPNIK_MINOR_VERSION = $(shell awk '/^#define MAPNIK_MINOR_VERSION/ {print $$3}' include/mapnik/version.hpp)
+MAPNIK_SO_VERSION = ${MAPNIK_MAJOR_VERSION}.${MAPNIK_MINOR_VERSION}
+
+MAPNIK_LIB_BASE = lib/$(DEB_HOST_MULTIARCH)/mapnik/$(MAPNIK_SO_VERSION)
+
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DBUILD_BENCHMARK=OFF \
+		-DBUILD_DEMO_CPP=OFF \
+		-DBUILD_DEMO_VIEWER=OFF \
+		-DBUILD_TESTING=OFF \
+		-DFONTS_INSTALL_DIR=share/fonts \
+		-DPLUGINS_INSTALL_DIR=$(MAPNIK_LIB_BASE)/input \
+		-DUSE_EXTERNAL_MAPBOX_GEOMETRY=ON \
+		-DUSE_EXTERNAL_MAPBOX_POLYLABEL=ON \
+		-DUSE_EXTERNAL_MAPBOX_PROTOZERO=ON \
+		-DUSE_EXTERNAL_MAPBOX_VARIANT=ON
