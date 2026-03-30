@@ -1,0 +1,88 @@
+name: Run tests with coverage
+description: Runs all mapnik tests with coverage
+inputs:
+  cmake-preset:
+    description: The used CMake preset
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set PROJ_LIB
+      if: runner.os != 'macOS'
+      shell: bash
+      run: |
+        cmake --preset ${{ inputs.cmake-preset }} -N -L | grep -o "PROJ_LIB=.*" >> ${GITHUB_ENV}
+
+    - name: Set TEST_WRAPPER (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |-
+          echo "TEST_WRAPPER=OpenCppCoverage \
+          --cover_children \
+          --export_type binary \
+          --modules '*.input' \
+          --modules '*libmapnik*' \
+          --modules 'mapnik*.exe' \
+          --quiet \
+          --sources '${{ github.workspace }}' \
+          --" >> ${GITHUB_ENV}
+
+    - name: Test
+      shell: bash
+      env:
+        UPDATE: 1
+      run: |
+        ${TEST_WRAPPER:-} ctest -V --preset ${{ inputs.cmake-preset }}
+
+    - name: Test visuals
+      continue-on-error: true
+      working-directory: build/out
+      shell: bash
+      run: |
+        ${TEST_WRAPPER:-} ./mapnik-test-visual -j ${CTEST_PARALLEL_LEVEL} --output-dir visual-test-result
+
+    - name: Pack visual test results
+      working-directory: build/out
+      if: runner.os != 'macOS'
+      shell: bash
+      run: |
+        tar -vzcf visual-test-results.tar.gz visual-test-result
+
+    - name: Upload visual test results
+      uses: actions/upload-artifact@v6
+      if: runner.os != 'macOS'
+      with:
+        name: ${{ inputs.cmake-preset }}-visual-tests-${{ github.sha }}
+        path: build/out/visual-test-results.tar.gz
+
+    - name: Run Benchmarks (Linux & macOS)
+      working-directory: build/out
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        ./run_benchmarks
+
+    - name: Collect coverage (Linux & macOS)
+      working-directory: build
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        if [ "${RUNNER_OS}" == "macOS" ]; then
+          LCOV_EXTRA_OPTIONS="--ignore-errors count,gcov,inconsistent,range,unused,format --keep-going"
+        fi
+        lcov ${LCOV_EXTRA_OPTIONS:-} --directory . --capture --output-file coverage.info
+        lcov ${LCOV_EXTRA_OPTIONS:-} --remove coverage.info '/usr/*' '*/vcpkg_installed/*'  '/.cache/*' '*/test/*'  --output-file coverage.info
+        lcov ${LCOV_EXTRA_OPTIONS:-} --list coverage.info
+
+    - name: Upload coverage to Codecov (Linux & macOS)
+      if: runner.os != 'Windows'
+      uses: codecov/codecov-action@v6
+      with:
+        files: build/coverage.info
+
+    - name: Upload coverage to Codecov (Windows)
+      if: runner.os == 'Windows'
+      uses: codecov/codecov-action@v6
+      with:
+        files: ctest.cov,build/out/mapnik-test-visual.cov
