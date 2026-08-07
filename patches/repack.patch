@@ -1,0 +1,14 @@
+Description: Don't include files removed from repacked upstream tarball.
+Author: Bas Couwenberg <sebastic@debian.org>
+Forwarded: not-needed
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -446,7 +446,6 @@ add_subdirectory(deps)
+ add_subdirectory(plugins)
+ add_subdirectory(src)
+ add_subdirectory(utils)
+-add_subdirectory(demo)
+ if(BUILD_BENCHMARK)
+     add_subdirectory(benchmark)
+ endif()
