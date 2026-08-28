@@ -1,0 +1,194 @@
+name: Build and Test
+
+permissions:
+  packages: write
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches-ignore:
+      - "no-ci-*"
+
+env:
+  USERNAME: mapnik
+  VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
+  FEED_URL: https://nuget.pkg.github.com/mapnik/index.json
+  VCPKG_RELEASE: 7e9d43fdadc456cb9ef892bd12d27e32503f41fa
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/mapnik/index.json,readwrite"
+
+jobs:
+  checkSource:
+    name: Check Source Code
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - uses: pre-commit/action@v3.0.1
+
+  buildAndTest:
+    name: >-
+      Build & Test
+      (${{ matrix.os }})
+      (C++ ${{ matrix.cxx-standard }})
+      ${{ startsWith(matrix.os, 'macos-') && (matrix.os == 'macos-26' && '(ARM64)' || '(AMD64)') || '' }}
+    needs: checkSource
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+          - macos-26
+          - windows-2022
+        cxx-standard:
+          - 20
+
+    steps:
+      - name: Enable long paths (Windows)
+        run: git config --global core.longpaths true
+        if: runner.os == 'Windows'
+
+      - name: Free disk space on Ubuntu runner
+        shell: bash
+        run: |
+          if [ "${RUNNER_OS}" == "Linux" ]; then
+             df -h
+             sudo apt-get clean
+             sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+             df -h
+          fi
+
+      - name: Checkout Mapnik
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v5
+        with:
+          path: vcpkg
+          ref: ${{ env.VCPKG_RELEASE }}
+          repository: mapnik/vcpkg
+
+      - name: Install required system packages
+        shell: bash
+        run: |
+          if [ "${RUNNER_OS}" == "Linux" ]; then
+            sudo apt update
+            sudo apt -y install \
+              autoconf \
+              autoconf-archive \
+              automake \
+              bison \
+              flex \
+              cmake \
+              gperf \
+              lcov \
+              libxxf86vm-dev \
+              mono-complete \
+              ninja-build \
+              postgresql-client
+          elif [ "${RUNNER_OS}" == "macOS" ]; then
+            brew install \
+              autoconf \
+              autoconf-archive \
+              automake \
+              mono \
+              lcov \
+              libtool \
+              ninja
+          elif [ "${RUNNER_OS}" == "Windows" ]; then
+            choco install \
+              ninja \
+              OpenCppCoverage
+            echo "C:\Program Files\OpenCppCoverage" >> ${GITHUB_PATH}
+          fi
+
+      - name: Bootstrap vcpkg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Bootstrap vcpkg (*nix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
+
+      - name: Add NuGet sources (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .$(${{ env.VCPKG_EXE }} fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.VCPKG_CACHE_PAT }}"
+          .$(${{ env.VCPKG_EXE }} fetch nuget) `
+            setapikey "${{ secrets.VCPKG_CACHE_PAT }}" `
+            -Source "${{ env.FEED_URL }}"
+
+      - name: Add NuGet sources (*nix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
+                sources add \
+                -Source "${{ env.FEED_URL }}" \
+                -StorePasswordInClearText \
+                -Name GitHubPackages \
+                -UserName "${{ env.USERNAME }}" \
+                -Password "${{ secrets.VCPKG_CACHE_PAT }}"
+           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
+                 setapikey "${{ secrets.VCPKG_CACHE_PAT }}" \
+                 -Source "${{ env.FEED_URL }}"
+
+      - name: Enable Developer Command Prompt (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+
+      - name: Set CMAKE_BUILD_PARALLEL_LEVEL, CTEST_PARALLEL_LEVEL & PRESET
+        shell: bash
+        run: |
+          PRESET=$(echo "${RUNNER_OS}" | perl -ne "print lc")-ci
+          if [ "${RUNNER_OS}" == "Linux" ]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)" >> ${GITHUB_ENV}
+            echo "CTEST_PARALLEL_LEVEL=$(nproc)" >> ${GITHUB_ENV}
+          elif [ "${RUNNER_OS}" == "macOS" ]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)" >> ${GITHUB_ENV}
+            echo "CTEST_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)" >> ${GITHUB_ENV}
+            PRESET=${PRESET}-${{ matrix.os == 'macos-26' && 'arm64' || 'x64' }}
+          elif [ "${RUNNER_OS}" == "Windows" ]; then
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$(pwsh -Command '(Get-CimInstance -ClassName Win32_ComputerSystem).NumberOfLogicalProcessors')" >> ${GITHUB_ENV}
+            echo "CTEST_PARALLEL_LEVEL=$(pwsh -Command '(Get-CimInstance -ClassName Win32_ComputerSystem).NumberOfLogicalProcessors')" >> ${GITHUB_ENV}
+          fi
+          echo "PRESET=${PRESET}" >> ${GITHUB_ENV}
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_CXX_STANDARD:STRING=${{ matrix.cxx-standard }}  \
+            -DUSE_MEMORY_MAPPED_FILE:BOOL=ON \
+            -LA \
+            --preset ${PRESET}
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake \
+            --build \
+            --preset ${PRESET}
+
+      - name: Run Tests
+        uses: ./.github/actions/run_tests
+        with:
+          cmake-preset: ${{ env.PRESET }}
