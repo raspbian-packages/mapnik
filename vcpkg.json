@@ -1,0 +1,80 @@
+{
+  "name": "mapnik",
+  "version-string": "master",
+  "description": "Mapnik is an open source toolkit for developing mapping applications.",
+  "homepage": "https://github.com/mapnik/mapnik",
+  "dependencies": [
+    "boost-assign",
+    "boost-beast",
+    "boost-bimap",
+    "boost-format",
+    "boost-geometry",
+    "boost-gil",
+    "boost-interprocess",
+    {
+      "name": "boost-locale",
+      "features": [
+        "icu"
+      ]
+    },
+    "boost-json",
+    "boost-lockfree",
+    "boost-msm",
+    "boost-url",
+    "boost-context",
+    "boost-program-options",
+    "boost-property-tree",
+    {
+      "name": "boost-regex",
+      "features": [
+        "icu"
+      ]
+    },
+    "boost-spirit",
+    "boost-system",
+    "cairo",
+    "cairomm",
+    {
+      "name": "freetype",
+      "features": [
+        "bzip2",
+        "png"
+      ]
+    },
+    "gdal",
+    {
+      "name": "harfbuzz",
+      "features": [
+        "icu"
+      ]
+    },
+    {
+      "name": "harfbuzz",
+      "features": [
+        "coretext"
+      ],
+      "platform": "osx"
+    },
+    "icu",
+    "libjpeg-turbo",
+    "libpng",
+    "libpq",
+    "libwebp",
+    "libavif",
+    "libxml2",
+    "mapbox-geometry",
+    "mapbox-polylabel",
+    "mapbox-variant",
+    "openssl",
+    "proj",
+    "protozero",
+    {
+      "name": "sqlite3",
+      "features": [
+        "rtree"
+      ]
+    },
+    "tiff",
+    "zlib"
+  ]
+}
