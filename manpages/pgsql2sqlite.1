@@ -1,0 +1,57 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH PGSQL2SQLITE 1 "January 11, 2007"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+pgsql2sqlite \- PostgreSQL/PostGIS to SQLite3 converter
+.SH SYNOPSIS
+.B pgsql2sqlite
+.RI [ options ]
+.SH DESCRIPTION
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
+.\" respectively.
+\fBpgsql2sqlite\fP is a program that converts data from a PostGIS database
+to SQLite.
+.SH OPTIONS
+.TP
+.B \-?, \-\-help
+Show summary of options.
+.TP
+.B \-h, \-\-host
+Allows you to specify connection to a database on a machine other than
+the default.
+.TP
+.B \-p, \-\-port
+Allows you to specify a database port other than the default.
+.TP
+.B \-d, \-\-dbname
+PostgreSQL database name
+.TP
+.B \-u, \-\-user
+Connect to the database as the specified user.
+.TP
+.B \-P, \-\-password
+Connect to the database with the specified password.
+.TP
+.B \-q, \-\-query
+Name of the table/or query to pass to postmaster
+.TP
+.B \-t, \-\-table
+Name of the output table to create (default: table in query)
+.TP
+.B \-f, \-\-file
+Use this option to specify the name of the file to create.
