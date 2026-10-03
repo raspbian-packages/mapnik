@@ -1,0 +1,5 @@
+#!/bin/sh
+
+inputdir=$(pkgconf --variable=plugins_dir libmapnik)
+
+echo $(dirname $inputdir/../)
