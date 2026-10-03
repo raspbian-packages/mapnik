@@ -1,0 +1,6 @@
+usr/bin/geometry_to_wkb
+usr/bin/mapnik-index
+usr/bin/mapnik-render
+usr/bin/pgsql2sqlite
+usr/bin/shapeindex
+usr/bin/svg2png

@@ -1,0 +1,6 @@
+usr/include/*
+usr/lib/*/*.a
+usr/lib/*/*.so
+usr/lib/*/cmake/*
+usr/lib/*/pkgconfig/*
+debian/mapnik-plugin-base usr/bin
